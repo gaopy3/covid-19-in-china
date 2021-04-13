@@ -1,2 +1,10 @@
 # Data sources
 
+The data of the COVID-19 in China was obtained using scratching methods in Python from the National Health Commission of China (http://www.nhc.gov.cn/xcs/yqtb/list_gzbd.shtml) and from Baidu Baike(https://baike.baidu.com/item/2020%E5%B9%B4%E4%B8%AD%E5%9B%BD%E6%96%B0%E5%86%A0%E8%82%BA%E7%82%8E%E7%96%AB%E6%83%85%E5%8F%91%E5%B1%95%E5%AE%9E%E5%BD%95/50157160?fr=aladdin). The data itself is collected by the officials in China with authority.
+
+The data in China contains the pandemic information within 34 provinces including Hongkong, Taiwan and Macao. In each province, we have variables in the number of cumulative confirmed cases, death cases and cured cases. And the nature of this data is a time series with a duration slightly over a month from 1/22/2020 to 2/29/2020.
+
+Next we have data with overall views in both China and the US. The data itself is collected by WHO (https://www.who.int/) and we obtained it on GitHub (https://github.com/CSSEGISandData/COVID-19).
+
+The data with overall views contains the information overall in China and US with variables in cumulative confirmed cases, death cases and daily increases in confirmed cases across a time period of over 400 days starting 1/22/2020.
+Some minor issues in the data from Chinese government because it is scratched from the web. We are managed to fix it manually since we cannot find a way to fix it with codes.

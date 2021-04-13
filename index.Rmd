@@ -7,3 +7,14 @@ site: bookdown::bookdown_site
 
 # Introduction
 
+We would like to choose this topic of COVID-19 in China because this is a pandemic which changes our life entirely and China is the homeland for all the three members in our group. As international students, we are the group of people who are most sensitive to the changing situation of the world and we want to look back upon what we have experienced and hope we can gather a piece using data visualization on how we human are able to get our lives back on track and what our homeland country China has achieved when facing such hazard.
+
+Coronavirus disease 2019 (COVID-19) is a contagious disease caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2). The first case was identified in Wuhan, China, in December 2019. The disease has since spread worldwide, leading to an ongoing pandemic. (From Wikipedia)
+
+Since the COVID-19 outbroke in Wuhan from Hubei province in China, the pandemic situation in China was extremely unpleasant back in early 2020. However, with the strong policy of Chinese Government and the faith in it people, China was able to withhold the pressure and the people in China have went back to normal life.
+In this visualization report, we want to address three major problems:  
+
+1. How does the pandemic spread in China? Does it follow a pattern (eg. Geometric) or not?
+2. What is the real situation of this pandemic in each province of China? What can we find when we look at those provinces individually?
+3. How does the epidemic in China relate to the major events (eg. Public policy) occurred during the same period? Compared it with what’s happening in the US.
+
