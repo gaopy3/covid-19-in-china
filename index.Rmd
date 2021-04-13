@@ -1,6 +1,6 @@
 --- 
-title: "YOUR TITLE HERE"
-author: "YOUR NAMES HERE"
+title: "Covid-19-China"
+author: "Qixiao He, Wenzhou Ma, Panyu Gao"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
 ---
