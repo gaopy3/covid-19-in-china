@@ -30,7 +30,6 @@ cn$province = sub("维吾尔", "", cn$province)
 cn$province = sub("壮族", "", cn$province)
 cn$province = sub("回族", "", cn$province)
 
-
 # china <- df %>%
 #   dplyr::filter(date == "2020/2/1" & type == "confirmed_cases")
 # df1 = data.frame(name = china$province_n,
@@ -47,8 +46,6 @@ cn$province = sub("回族", "", cn$province)
 #   xlab(NULL) + ylab(NULL) +
 #   labs(title = '2019nCov',
 #        caption=paste("accessed date:", "2020/2/1"))
-
-
 
 d <- c(paste0("2020/1/", 20:31), paste0("2020/2/", 1:21))
 
@@ -83,7 +80,6 @@ image_write(animation, path = "animation.gif", format = "gif")
 ```
 ![](animation.gif)
 
-
 ## Epidemic situation in each province
 
 Regarding the cumulative confirmed cases data, we plot two line graphs. The difference between them is the arrangement of facets. The first graph is arranged according to geographic location. The second graph is arranged in descending order of the number of confirmed cases of each province.
@@ -114,14 +110,7 @@ ggplot(covid_data_tidy, aes(x = date, y = confirmed_cases+1)) +
 Since the number of confirmed cases in Hubei Province is much higher than that in other provinces, in order to show the cumulative confirmed cases distribution of each province better, the cumulative confirmed cases will be displayed after taking the logarithm. It can also be clearly found from the graph that the cumulative confirmed cases in Hubei Province is much higher than that in other provinces.
 After February 2020, the rate of increase in cases has gradually slowed down. At the end of February 2020, the cumulative confirmed curve of most provinces has flattened, and the epidemic has been effectively controlled. 
 
-```{r}
-# covid_data_tidy$confirmed_cases <- log(covid_data_tidy$confirmed_cases+1, 2)
-# ggplot(covid_data_tidy, aes(x = date, y = confirmed_cases+1, colour = province)) +
-#   geom_line() +
-#   ylab("Confirmed cases") +
-#   scale_y_continuous(trans = log2_trans()) +
-#   ggtitle('Cumulative confirmed_cases')
-```
+
 
 The following two graphs are plotted using new cases data every day. The facet arrangement of these two graphs is the same as graphs above. 
 

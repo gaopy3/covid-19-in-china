@@ -1,1 +1,3 @@
 # Missing values
+
+Fortunately, since most of our data sources are from official website and in standard format. We did not encounter problems in missing values. Most of our data remains complete and intact.
