@@ -1,2 +1,5 @@
 # Conclusion
 
+Our analysis is mainly based on the confirmed Covid-19 cases reported by local authorities. We approximate the spread of virus by the number of confirmed cases. However, the number of infected is not necessarily the same as that of the confirmed cases. Incubation period, limitations in Diagnosis, miss-reporting by local authorities, all of these factors will make the number of confirmed cases differs from the actual infected number.
+
+For future directions, we would like to take into account of the limitations of the confirmed data and apply the methodology of epidemiology (e.g. propagation coefficient) to build a more precise mathematical model for the analysis of the spread of the virus. Furthermore, we would like to explore on other relevant data sets such as the population mobility during the pandemic and investigate how those data affect the spread of the virus.

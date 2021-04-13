@@ -1,1 +1,141 @@
 # Results
+### Epidemic map
+
+```{r, echo=TRUE}
+df <- read.table("confirmed_final.csv", sep=",", header=TRUE)
+head(df)
+```
+
+```{r, echo=TRUE, message = FALSE, warning = FALSE, results = FALSE}
+# require(nCov2019)
+# remotes::install_github("GuangchuangYu/chinamap")
+# 
+require(chinamap)
+require(ggplot2)
+library(magick)
+
+cn = get_map_china()
+cn$province = sub("省", "", cn$province)
+cn$province = sub("自治区", "", cn$province)
+cn$province = sub("市", "", cn$province)
+cn$province = sub("特别行政区", "", cn$province)
+cn$province = sub("维吾尔", "", cn$province)
+cn$province = sub("壮族", "", cn$province)
+cn$province = sub("回族", "", cn$province)
+
+
+# china <- df %>%
+#   dplyr::filter(date == "2020/2/1" & type == "confirmed_cases")
+# df1 = data.frame(name = china$province_n,
+#                 confirm = cut(china$value, c(1,10,100,500,1000,10000),
+#                               include.lowest = T, right=F))
+# 
+# cn2 = merge(cn, df1, by.x='province', by.y='name', all.x=TRUE)
+# cn2 = cn2[order(cn2$order),]
+# p<-ggplot() +
+#   geom_map(aes(long, lat, map_id=id, group=group, fill=confirm), map=cn2, data=cn2, colour='grey') +
+#   coord_map() +
+#   scale_fill_manual(values=cols, breaks=names(cols)) +
+#   theme_minimal() +
+#   xlab(NULL) + ylab(NULL) +
+#   labs(title = '2019nCov',
+#        caption=paste("accessed date:", "2020/2/1"))
+
+
+
+d <- c(paste0("2020/1/", 20:31), paste0("2020/2/", 1:21))
+
+img <- image_graph(600, 400, res = 96)
+
+out <- lapply(d, function(date1){
+  china <- df %>%
+    dplyr::filter(date == date1 & type == "confirmed_cases")
+  df1 = data.frame(name = china$province_n,
+                confirm = cut(china$value, c(1,10,100,500,1000,10000,100000),
+                              include.lowest = T, right=F))
+
+  cn2 = merge(cn, df1, by.x='province', by.y='name', all.x=TRUE)
+  cn2 = cn2[order(cn2$order),]
+  cols = RColorBrewer::brewer.pal(6, 'Reds')
+  names(cols) = levels(df$confirm)
+  p <- ggplot() +
+  geom_map(aes(long, lat, map_id=id, group=group, fill=confirm), map=cn2, data=cn2, colour='grey') +
+  coord_map() +
+  scale_fill_manual(values=cols, breaks=names(cols)) +
+  theme_minimal() +
+  xlab(NULL) + ylab(NULL) +
+  labs(title = '2019nCov',
+       caption=paste("accessed date:", date1))
+  print(p)
+})
+dev.off()
+
+animation <- image_animate(img, fps = 2)
+print(animation)
+image_write(animation, path = "animation.gif", format = "gif")
+```
+![](animation.gif)
+
+### Epidemic situation in each province
+
+Regarding the cumulative confirmed cases data, we plot two line graphs. The difference between them is the arrangement of facets. The first graph is arranged according to geographic location. The second graph is arranged in descending order of the number of confirmed cases of each province.
+
+```{r, fig.width= 12,fig.height=12}
+covid_data_tidy$province[covid_data_tidy$province == 'Inner.Mongoria'] <- 'Inner Mongolia'
+covid_data_tidy$province[covid_data_tidy$province == 'Hong.Kong'] <- 'Hong Kong'
+ggplot(covid_data_tidy, aes(x = date, y = confirmed_cases + 1)) +
+  geom_line() +
+  facet_geo(~ province, grid = "china_prov_grid2", label = 'name') +
+  ylab("Added confirmed cases") +
+  scale_y_continuous(trans = log2_trans()) +
+  ggtitle('Cumulative confirmed cases')
+```
+
+```{r, fig.width= 8,fig.height=10}
+province_order[province_order=="Inner.Mongoria"] <- 'Inner Mongolia'
+province_order[province_order=="Hong.Kong"] <- 'Hong Kong'
+covid_data_tidy$province <- factor(covid_data_tidy$province, levels = province_order)
+ggplot(covid_data_tidy, aes(x = date, y = confirmed_cases+1)) +
+  geom_line() +
+  facet_wrap(~ province, ncol = 6) + 
+  ylab("Confirmed cases") +
+  scale_y_continuous(trans = log2_trans()) +
+  ggtitle('Cumulative confirmed cases')
+```
+
+Since the number of confirmed cases in Hubei Province is much higher than that in other provinces, in order to show the cumulative confirmed cases distribution of each province better, the cumulative confirmed cases will be displayed after taking the logarithm. It can also be clearly found from the graph that the cumulative confirmed cases in Hubei Province is much higher than that in other provinces.
+After February 2020, the rate of increase in cases has gradually slowed down. At the end of February 2020, the cumulative confirmed curve of most provinces has flattened, and the epidemic has been effectively controlled. 
+
+```{r}
+# covid_data_tidy$confirmed_cases <- log(covid_data_tidy$confirmed_cases+1, 2)
+# ggplot(covid_data_tidy, aes(x = date, y = confirmed_cases+1, colour = province)) +
+#   geom_line() +
+#   ylab("Confirmed cases") +
+#   scale_y_continuous(trans = log2_trans()) +
+#   ggtitle('Cumulative confirmed_cases')
+```
+
+The following two graphs are plotted using new cases data every day. The facet arrangement of these two graphs is the same as graphs above. 
+
+```{r, fig.width= 12,fig.height=10}
+ggplot(covid_added_byday_tidy, aes(x = date, y = added_confirmed_cases+1)) +
+  geom_line() +
+  facet_geo(~ province, grid = "china_prov_grid2", label = 'name') +
+  ylab("New confirmed cases") +
+  scale_y_continuous(trans = log2_trans()) +
+  ggtitle('New confirmed cases')
+```
+
+```{r, fig.width= 8,fig.height=10}
+covid_added_byday_tidy$province <- factor(covid_added_byday_tidy$province, levels = province_order)
+ggplot(covid_added_byday_tidy, aes(x = date, y = added_confirmed_cases+1)) +
+  geom_line() +
+  facet_wrap(~ province, ncol = 6) + 
+  ylab("New confirmed cases") +
+  scale_y_continuous(trans = log2_trans()) +
+  ggtitle('New confirmed cases')
+```
+
+It can be seen from the new confirmed cases graph that the distribution of new cases every day shows a right deviation, with a rapid jump in the early stage and a slow decrease in the later stage. Except for Hubei Province, the number of new cases per day in other provinces is close to zero.
+
+**Epidemic map** is better than the line graph with geographic location. Because the shape of each province in China is irrgular, **Epidemic map** is the better choice to show **geographic information**. 

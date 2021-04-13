@@ -1,3 +1,30 @@
 # Interactive component
 
+This is an interactive Cleveland dot plot. It has a timeline which can be dragged. It can also be played in the form of animation. We use the plotly package in this part which is using plotly.js (Built on top of d3.js and stack.gl) to realize interactive functions.
 
+```{r, fig.width= 8, fig.height=20}
+library(plotly)
+province_order <- names(covid_data_province)[order(covid_data_province[42, 2:35])+1]
+confirmed_cured_tidy$date = as.character(confirmed_cured_tidy$date)
+confirmed_cured_tidy$province <- factor(confirmed_cured_tidy$province, levels = province_order)
+y_axis <- list(
+  autotick = FALSE,
+  ticks = "inside",
+  dtick = 1,
+  tickcolor = toRGB("darkblue")
+)
+fig <- plot_ly(confirmed_cured_tidy, 
+    x = ~value+1, 
+    y = ~province,
+    frame = ~date,
+    type = 'scatter',
+    mode = 'markers',
+    height = 800, 
+    color = ~type,
+    colors = c('#D55E00', '#009E73')
+  ) 
+fig <- layout(fig, xaxis = list(type = "log", title = 'Confirmed Cured'), yaxis = y_axis)
+fig
+```
+
+This plot is ordered by cumulative confirmed cases. From this graph, we can see both cumulative and cured cases and the gap ofthem. We are able to know about the severity of the epidemic in each province and which province needs more medical resources. 
