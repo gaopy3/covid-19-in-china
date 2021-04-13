@@ -3,5 +3,8 @@ data-sources
 data-transformation
 missing-values
 results
+epidemic-map
+epidemic-situation-in-each-province
+comparison-with-us-pandemic
 interactive-component
 conclusion

@@ -33,7 +33,7 @@
   
 <link rel="prev" href="missing-values.html"/>
 <link rel="next" href="interactive-component.html"/>
-<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<script src="libs/jquery-3.5.1/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -50,6 +50,13 @@
 
 
 
+<script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<script src="libs/plotly-binding-4.9.3/plotly.js"></script>
+<script src="libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="libs/crosstalk-1.1.1/css/crosstalk.css" rel="stylesheet" />
+<script src="libs/crosstalk-1.1.1/js/crosstalk.min.js"></script>
+<link href="libs/plotly-htmlwidgets-css-1.57.1/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="libs/plotly-main-1.57.1/plotly-latest.min.js"></script>
 
 
 <style type="text/css">
@@ -135,7 +142,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>2</b> Data sources</a></li>
 <li class="chapter" data-level="3" data-path="data-transformation.html"><a href="data-transformation.html"><i class="fa fa-check"></i><b>3</b> Data transformation</a></li>
 <li class="chapter" data-level="4" data-path="missing-values.html"><a href="missing-values.html"><i class="fa fa-check"></i><b>4</b> Missing values</a></li>
-<li class="chapter" data-level="5" data-path="results.html"><a href="results.html"><i class="fa fa-check"></i><b>5</b> Results</a></li>
+<li class="chapter" data-level="5" data-path="results.html"><a href="results.html"><i class="fa fa-check"></i><b>5</b> Results</a><ul>
+<li class="chapter" data-level="5.1" data-path="results.html"><a href="results.html#epidemic-map"><i class="fa fa-check"></i><b>5.1</b> Epidemic map</a></li>
+<li class="chapter" data-level="5.2" data-path="results.html"><a href="results.html#epidemic-situation-in-each-province"><i class="fa fa-check"></i><b>5.2</b> Epidemic situation in each province</a></li>
+<li class="chapter" data-level="5.3" data-path="results.html"><a href="results.html#comparison-with-us-pandemic"><i class="fa fa-check"></i><b>5.3</b> Comparison with US pandemic</a></li>
+</ul></li>
 <li class="chapter" data-level="6" data-path="interactive-component.html"><a href="interactive-component.html"><i class="fa fa-check"></i><b>6</b> Interactive component</a></li>
 <li class="chapter" data-level="7" data-path="conclusion.html"><a href="conclusion.html"><i class="fa fa-check"></i><b>7</b> Conclusion</a></li>
 <li class="divider"></li>
@@ -159,7 +170,198 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="results" class="section level1">
 <h1><span class="header-section-number">Chapter 5</span> Results</h1>
+<div id="epidemic-map" class="section level2">
+<h2><span class="header-section-number">5.1</span> Epidemic map</h2>
+<p>We first want to have a big picture on the spread of Cvod-19 in China. We decided to get an animation on the total confirmed cases of Cvod-19 for each province such that we may find a geometric pattern on the pandemic.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">df &lt;-<span class="st"> </span><span class="kw">read.table</span>(<span class="st">&quot;confirmed_final.csv&quot;</span>, <span class="dt">sep=</span><span class="st">&quot;,&quot;</span>, <span class="dt">header=</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="kw">head</span>(df)</a></code></pre></div>
+<pre><code>##   X      date province province_n            type value
+## 1 1 2020/1/19    Anhui       安徽 confirmed_cases     0
+## 2 2 2020/1/19    Anhui       安徽           cured     0
+## 3 3 2020/1/19    Macao       澳门 confirmed_cases     0
+## 4 4 2020/1/19    Macao       澳门           cured     0
+## 5 5 2020/1/19  Beijing       北京 confirmed_cases     0
+## 6 6 2020/1/19  Beijing       北京           cured     0</code></pre>
+<p>In order to ingregate the data with the map of China, we use chinamap made by GuangchangYu (<a href="https://github.com/GuangchuangYu/chinamap" class="uri">https://github.com/GuangchuangYu/chinamap</a>). And we apply package magick to make an animation of the spread of the virus.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="co">#require(nCov2019)</span></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="kw">require</span>(chinamap)</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="kw">require</span>(ggplot2)</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4"><span class="kw">library</span>(magick)</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">cn =<span class="st"> </span><span class="kw">get_map_china</span>()</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">cn<span class="op">$</span>province =<span class="st"> </span><span class="kw">sub</span>(<span class="st">&quot;省&quot;</span>, <span class="st">&quot;&quot;</span>, cn<span class="op">$</span>province)</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">cn<span class="op">$</span>province =<span class="st"> </span><span class="kw">sub</span>(<span class="st">&quot;自治区&quot;</span>, <span class="st">&quot;&quot;</span>, cn<span class="op">$</span>province)</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">cn<span class="op">$</span>province =<span class="st"> </span><span class="kw">sub</span>(<span class="st">&quot;市&quot;</span>, <span class="st">&quot;&quot;</span>, cn<span class="op">$</span>province)</a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">cn<span class="op">$</span>province =<span class="st"> </span><span class="kw">sub</span>(<span class="st">&quot;特别行政区&quot;</span>, <span class="st">&quot;&quot;</span>, cn<span class="op">$</span>province)</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">cn<span class="op">$</span>province =<span class="st"> </span><span class="kw">sub</span>(<span class="st">&quot;维吾尔&quot;</span>, <span class="st">&quot;&quot;</span>, cn<span class="op">$</span>province)</a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">cn<span class="op">$</span>province =<span class="st"> </span><span class="kw">sub</span>(<span class="st">&quot;壮族&quot;</span>, <span class="st">&quot;&quot;</span>, cn<span class="op">$</span>province)</a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">cn<span class="op">$</span>province =<span class="st"> </span><span class="kw">sub</span>(<span class="st">&quot;回族&quot;</span>, <span class="st">&quot;&quot;</span>, cn<span class="op">$</span>province)</a>
+<a class="sourceLine" id="cb9-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb9-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb9-16" data-line-number="16"><span class="co"># china &lt;- df %&gt;%</span></a>
+<a class="sourceLine" id="cb9-17" data-line-number="17"><span class="co">#   dplyr::filter(date == &quot;2020/2/1&quot; &amp; type == &quot;confirmed_cases&quot;)</span></a>
+<a class="sourceLine" id="cb9-18" data-line-number="18"><span class="co"># df1 = data.frame(name = china$province_n,</span></a>
+<a class="sourceLine" id="cb9-19" data-line-number="19"><span class="co">#                 confirm = cut(china$value, c(1,10,100,500,1000,10000),</span></a>
+<a class="sourceLine" id="cb9-20" data-line-number="20"><span class="co">#                               include.lowest = T, right=F))</span></a>
+<a class="sourceLine" id="cb9-21" data-line-number="21"><span class="co"># </span></a>
+<a class="sourceLine" id="cb9-22" data-line-number="22"><span class="co"># cn2 = merge(cn, df1, by.x=&#39;province&#39;, by.y=&#39;name&#39;, all.x=TRUE)</span></a>
+<a class="sourceLine" id="cb9-23" data-line-number="23"><span class="co"># cn2 = cn2[order(cn2$order),]</span></a>
+<a class="sourceLine" id="cb9-24" data-line-number="24"><span class="co"># p&lt;-ggplot() +</span></a>
+<a class="sourceLine" id="cb9-25" data-line-number="25"><span class="co">#   geom_map(aes(long, lat, map_id=id, group=group, fill=confirm), map=cn2, data=cn2, colour=&#39;grey&#39;) +</span></a>
+<a class="sourceLine" id="cb9-26" data-line-number="26"><span class="co">#   coord_map() +</span></a>
+<a class="sourceLine" id="cb9-27" data-line-number="27"><span class="co">#   scale_fill_manual(values=cols, breaks=names(cols)) +</span></a>
+<a class="sourceLine" id="cb9-28" data-line-number="28"><span class="co">#   theme_minimal() +</span></a>
+<a class="sourceLine" id="cb9-29" data-line-number="29"><span class="co">#   xlab(NULL) + ylab(NULL) +</span></a>
+<a class="sourceLine" id="cb9-30" data-line-number="30"><span class="co">#   labs(title = &#39;2019nCov&#39;,</span></a>
+<a class="sourceLine" id="cb9-31" data-line-number="31"><span class="co">#        caption=paste(&quot;accessed date:&quot;, &quot;2020/2/1&quot;))</span></a>
+<a class="sourceLine" id="cb9-32" data-line-number="32"></a>
+<a class="sourceLine" id="cb9-33" data-line-number="33"></a>
+<a class="sourceLine" id="cb9-34" data-line-number="34"></a>
+<a class="sourceLine" id="cb9-35" data-line-number="35">d &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">paste0</span>(<span class="st">&quot;2020/1/&quot;</span>, <span class="dv">20</span><span class="op">:</span><span class="dv">31</span>), <span class="kw">paste0</span>(<span class="st">&quot;2020/2/&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">21</span>))</a>
+<a class="sourceLine" id="cb9-36" data-line-number="36"></a>
+<a class="sourceLine" id="cb9-37" data-line-number="37">img &lt;-<span class="st"> </span><span class="kw">image_graph</span>(<span class="dv">600</span>, <span class="dv">400</span>, <span class="dt">res =</span> <span class="dv">96</span>)</a>
+<a class="sourceLine" id="cb9-38" data-line-number="38"></a>
+<a class="sourceLine" id="cb9-39" data-line-number="39">out &lt;-<span class="st"> </span><span class="kw">lapply</span>(d, <span class="cf">function</span>(date1){</a>
+<a class="sourceLine" id="cb9-40" data-line-number="40">  china &lt;-<span class="st"> </span>df <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb9-41" data-line-number="41"><span class="st">    </span>dplyr<span class="op">::</span><span class="kw">filter</span>(date <span class="op">==</span><span class="st"> </span>date1 <span class="op">&amp;</span><span class="st"> </span>type <span class="op">==</span><span class="st"> &quot;confirmed_cases&quot;</span>)</a>
+<a class="sourceLine" id="cb9-42" data-line-number="42">  df1 =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">name =</span> china<span class="op">$</span>province_n,</a>
+<a class="sourceLine" id="cb9-43" data-line-number="43">                <span class="dt">confirm =</span> <span class="kw">cut</span>(china<span class="op">$</span>value, <span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">10</span>,<span class="dv">100</span>,<span class="dv">500</span>,<span class="dv">1000</span>,<span class="dv">10000</span>,<span class="dv">100000</span>),</a>
+<a class="sourceLine" id="cb9-44" data-line-number="44">                              <span class="dt">include.lowest =</span> T, <span class="dt">right=</span>F))</a>
+<a class="sourceLine" id="cb9-45" data-line-number="45"></a>
+<a class="sourceLine" id="cb9-46" data-line-number="46">  cn2 =<span class="st"> </span><span class="kw">merge</span>(cn, df1, <span class="dt">by.x=</span><span class="st">&#39;province&#39;</span>, <span class="dt">by.y=</span><span class="st">&#39;name&#39;</span>, <span class="dt">all.x=</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb9-47" data-line-number="47">  cn2 =<span class="st"> </span>cn2[<span class="kw">order</span>(cn2<span class="op">$</span>order),]</a>
+<a class="sourceLine" id="cb9-48" data-line-number="48">  cols =<span class="st"> </span>RColorBrewer<span class="op">::</span><span class="kw">brewer.pal</span>(<span class="dv">6</span>, <span class="st">&#39;Reds&#39;</span>)</a>
+<a class="sourceLine" id="cb9-49" data-line-number="49">  <span class="kw">names</span>(cols) =<span class="st"> </span><span class="kw">levels</span>(df<span class="op">$</span>confirm)</a>
+<a class="sourceLine" id="cb9-50" data-line-number="50">  p &lt;-<span class="st"> </span><span class="kw">ggplot</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb9-51" data-line-number="51"><span class="st">  </span><span class="kw">geom_map</span>(<span class="kw">aes</span>(long, lat, <span class="dt">map_id=</span>id, <span class="dt">group=</span>group, <span class="dt">fill=</span>confirm), <span class="dt">map=</span>cn2, <span class="dt">data=</span>cn2, <span class="dt">colour=</span><span class="st">&#39;grey&#39;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb9-52" data-line-number="52"><span class="st">  </span><span class="kw">coord_map</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb9-53" data-line-number="53"><span class="st">  </span><span class="kw">scale_fill_manual</span>(<span class="dt">values=</span>cols, <span class="dt">breaks=</span><span class="kw">names</span>(cols)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb9-54" data-line-number="54"><span class="st">  </span><span class="kw">theme_minimal</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb9-55" data-line-number="55"><span class="st">  </span><span class="kw">xlab</span>(<span class="ot">NULL</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="ot">NULL</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb9-56" data-line-number="56"><span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&#39;2019nCov&#39;</span>,</a>
+<a class="sourceLine" id="cb9-57" data-line-number="57">       <span class="dt">caption=</span><span class="kw">paste</span>(<span class="st">&quot;accessed date:&quot;</span>, date1))</a>
+<a class="sourceLine" id="cb9-58" data-line-number="58">  <span class="kw">print</span>(p)</a>
+<a class="sourceLine" id="cb9-59" data-line-number="59">})</a>
+<a class="sourceLine" id="cb9-60" data-line-number="60"><span class="kw">dev.off</span>()</a>
+<a class="sourceLine" id="cb9-61" data-line-number="61"></a>
+<a class="sourceLine" id="cb9-62" data-line-number="62">animation &lt;-<span class="st"> </span><span class="kw">image_animate</span>(img, <span class="dt">fps =</span> <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb9-63" data-line-number="63"><span class="kw">print</span>(animation)</a>
+<a class="sourceLine" id="cb9-64" data-line-number="64"><span class="kw">image_write</span>(animation, <span class="dt">path =</span> <span class="st">&quot;animation.gif&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;gif&quot;</span>)</a></code></pre></div>
+<p><img src="animation.gif" /></p>
+</div>
+<div id="epidemic-situation-in-each-province" class="section level2">
+<h2><span class="header-section-number">5.2</span> Epidemic situation in each province</h2>
+<p>Regarding the cumulative confirmed cases data, we plot two line graphs. The difference between them is the arrangement of facets. The first graph is arranged according to geographic location. The second graph is arranged in descending order of the number of confirmed cases of each province.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1">covid_data_tidy<span class="op">$</span>province[covid_data_tidy<span class="op">$</span>province <span class="op">==</span><span class="st"> &#39;Inner.Mongoria&#39;</span>] &lt;-<span class="st"> &#39;Inner Mongolia&#39;</span></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">covid_data_tidy<span class="op">$</span>province[covid_data_tidy<span class="op">$</span>province <span class="op">==</span><span class="st"> &#39;Hong.Kong&#39;</span>] &lt;-<span class="st"> &#39;Hong Kong&#39;</span></a>
+<a class="sourceLine" id="cb10-3" data-line-number="3"><span class="kw">ggplot</span>(covid_data_tidy, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> confirmed_cases <span class="op">+</span><span class="st"> </span><span class="dv">1</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-5" data-line-number="5"><span class="st">  </span><span class="kw">facet_geo</span>(<span class="op">~</span><span class="st"> </span>province, <span class="dt">grid =</span> <span class="st">&quot;china_prov_grid2&quot;</span>, <span class="dt">label =</span> <span class="st">&#39;name&#39;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-6" data-line-number="6"><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Added confirmed cases&quot;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-7" data-line-number="7"><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">trans =</span> <span class="kw">log2_trans</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb10-8" data-line-number="8"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&#39;Cumulative confirmed cases&#39;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-13-1.png" width="1152" /></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">province_order[province_order<span class="op">==</span><span class="st">&quot;Inner.Mongoria&quot;</span>] &lt;-<span class="st"> &#39;Inner Mongolia&#39;</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">province_order[province_order<span class="op">==</span><span class="st">&quot;Hong.Kong&quot;</span>] &lt;-<span class="st"> &#39;Hong Kong&#39;</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">covid_data_tidy<span class="op">$</span>province &lt;-<span class="st"> </span><span class="kw">factor</span>(covid_data_tidy<span class="op">$</span>province, <span class="dt">levels =</span> province_order)</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4"><span class="kw">ggplot</span>(covid_data_tidy, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> confirmed_cases<span class="op">+</span><span class="dv">1</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-5" data-line-number="5"><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-6" data-line-number="6"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span><span class="st"> </span>province, <span class="dt">ncol =</span> <span class="dv">6</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb11-7" data-line-number="7"><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Confirmed cases&quot;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-8" data-line-number="8"><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">trans =</span> <span class="kw">log2_trans</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-9" data-line-number="9"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&#39;Cumulative confirmed cases&#39;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-14-1.png" width="768" /></p>
+<p>Since the number of confirmed cases in Hubei Province is much higher than that in other provinces, in order to show the cumulative confirmed cases distribution of each province better, the cumulative confirmed cases will be displayed after taking the logarithm. It can also be clearly found from the graph that the cumulative confirmed cases in Hubei Province is much higher than that in other provinces.
+After February 2020, the rate of increase in cases has gradually slowed down. At the end of February 2020, the cumulative confirmed curve of most provinces has flattened, and the epidemic has been effectively controlled.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="co"># covid_data_tidy$confirmed_cases &lt;- log(covid_data_tidy$confirmed_cases+1, 2)</span></a>
+<a class="sourceLine" id="cb12-2" data-line-number="2"><span class="co"># ggplot(covid_data_tidy, aes(x = date, y = confirmed_cases+1, colour = province)) +</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"><span class="co">#   geom_line() +</span></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4"><span class="co">#   ylab(&quot;Confirmed cases&quot;) +</span></a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"><span class="co">#   scale_y_continuous(trans = log2_trans()) +</span></a>
+<a class="sourceLine" id="cb12-6" data-line-number="6"><span class="co">#   ggtitle(&#39;Cumulative confirmed_cases&#39;)</span></a></code></pre></div>
+<p>The following two graphs are plotted using new cases data every day. The facet arrangement of these two graphs is the same as graphs above.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">ggplot</span>(covid_added_byday_tidy, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> added_confirmed_cases<span class="op">+</span><span class="dv">1</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb13-3" data-line-number="3"><span class="st">  </span><span class="kw">facet_geo</span>(<span class="op">~</span><span class="st"> </span>province, <span class="dt">grid =</span> <span class="st">&quot;china_prov_grid2&quot;</span>, <span class="dt">label =</span> <span class="st">&#39;name&#39;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb13-4" data-line-number="4"><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;New confirmed cases&quot;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb13-5" data-line-number="5"><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">trans =</span> <span class="kw">log2_trans</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb13-6" data-line-number="6"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&#39;New confirmed cases&#39;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-16-1.png" width="1152" /></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1">covid_added_byday_tidy<span class="op">$</span>province &lt;-<span class="st"> </span><span class="kw">factor</span>(covid_added_byday_tidy<span class="op">$</span>province, <span class="dt">levels =</span> province_order)</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="kw">ggplot</span>(covid_added_byday_tidy, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> added_confirmed_cases<span class="op">+</span><span class="dv">1</span>)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb14-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb14-4" data-line-number="4"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span><span class="st"> </span>province, <span class="dt">ncol =</span> <span class="dv">6</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb14-5" data-line-number="5"><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;New confirmed cases&quot;</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb14-6" data-line-number="6"><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">trans =</span> <span class="kw">log2_trans</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb14-7" data-line-number="7"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&#39;New confirmed cases&#39;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
+<p>It can be seen from the new confirmed cases graph that the distribution of new cases every day shows a right deviation, with a rapid jump in the early stage and a slow decrease in the later stage. Except for Hubei Province, the number of new cases per day in other provinces is close to zero.</p>
+<p><strong>Epidemic map</strong> is better than the line graph with geographic location. Because the shape of each province in China is irrgular, <strong>Epidemic map</strong> is the better choice to show <strong>geographic information</strong>.</p>
+</div>
+<div id="comparison-with-us-pandemic" class="section level2">
+<h2><span class="header-section-number">5.3</span> Comparison with US pandemic</h2>
+<p>First of all we want to input the data and transfer the data into dataframe in R.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">df_us_confirmed &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="st">&quot;/Users/gaopy3/Columbia_DS/EDAV/final_project/New folder/US_confirmed.csv&quot;</span>)</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">df_us_daily &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="st">&quot;/Users/gaopy3/Columbia_DS/EDAV/final_project/New folder/US_daily.csv&quot;</span>)</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">df_cn_confirmed &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="st">&quot;/Users/gaopy3/Columbia_DS/EDAV/final_project/New folder/China_confirmed.csv&quot;</span>)</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">df_cn_daily &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="st">&quot;/Users/gaopy3/Columbia_DS/EDAV/final_project/New folder/China_daily.csv&quot;</span>)</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">df_us_death &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="st">&quot;/Users/gaopy3/Columbia_DS/EDAV/final_project/New folder/US_death.csv&quot;</span>)</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">df_cn_death &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_csv</span>(<span class="st">&quot;/Users/gaopy3/Columbia_DS/EDAV/final_project/New folder/China_death.csv&quot;</span>)</a>
+<a class="sourceLine" id="cb15-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb15-8" data-line-number="8">df_us_confirmed &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">date =</span> df_us_confirmed<span class="op">$</span>X1, <span class="dt">confirmed =</span> df_us_confirmed<span class="op">$</span>confirmed, <span class="dt">moving_average =</span> df_us_confirmed<span class="op">$</span><span class="st">`</span><span class="dt">moving average</span><span class="st">`</span>)</a>
+<a class="sourceLine" id="cb15-9" data-line-number="9">df_cn_confirmed &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">date =</span> df_cn_confirmed<span class="op">$</span>X1, <span class="dt">confirmed =</span> df_cn_confirmed<span class="op">$</span>confirmed, <span class="dt">moving_average =</span> df_cn_confirmed<span class="op">$</span><span class="st">`</span><span class="dt">moving average</span><span class="st">`</span>)</a>
+<a class="sourceLine" id="cb15-10" data-line-number="10">df_us_daily &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">date =</span> df_us_daily<span class="op">$</span>X1, <span class="dt">confirmed =</span> df_us_daily<span class="op">$</span>daily, <span class="dt">moving_average =</span> df_us_daily<span class="op">$</span><span class="st">`</span><span class="dt">moving average</span><span class="st">`</span>)</a>
+<a class="sourceLine" id="cb15-11" data-line-number="11">df_cn_daily &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">date =</span> df_cn_daily<span class="op">$</span>X1, <span class="dt">confirmed =</span> df_cn_daily<span class="op">$</span>daily, <span class="dt">moving_average =</span> df_cn_daily<span class="op">$</span><span class="st">`</span><span class="dt">moving average</span><span class="st">`</span>)</a>
+<a class="sourceLine" id="cb15-12" data-line-number="12">df_us_death &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">date =</span> df_us_death<span class="op">$</span>X1, <span class="dt">death =</span> df_us_death<span class="op">$</span>death, <span class="dt">moving_average =</span> df_us_death<span class="op">$</span><span class="st">`</span><span class="dt">moving average</span><span class="st">`</span>)</a>
+<a class="sourceLine" id="cb15-13" data-line-number="13">df_cn_death &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">date =</span> df_cn_death<span class="op">$</span>X1, <span class="dt">death =</span> df_cn_death<span class="op">$</span>death, <span class="dt">moving_average =</span> df_cn_death<span class="op">$</span><span class="st">`</span><span class="dt">moving average</span><span class="st">`</span>)</a></code></pre></div>
+<p>Next, let’s look at the pattern of accumulative confirmed cases from US and China.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">ggplot</span>(<span class="dt">data=</span>df_us_confirmed, <span class="kw">aes</span>(date)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> confirmed, <span class="dt">colour =</span> <span class="st">&quot;Confirmed Cases&quot;</span>), <span class="dt">size=</span><span class="fl">1.3</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> moving_average, <span class="dt">colour =</span> <span class="st">&quot;Moving average for 7 days&quot;</span>), <span class="dt">linetype =</span> <span class="st">&quot;dashed&quot;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Confirmed Cases in US&quot;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">ggplot</span>(<span class="dt">data=</span>df_cn_confirmed, <span class="kw">aes</span>(date)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb17-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> confirmed, <span class="dt">colour =</span> <span class="st">&quot;Confirmed Cases&quot;</span>), <span class="dt">size=</span><span class="fl">1.3</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb17-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> moving_average, <span class="dt">colour =</span> <span class="st">&quot;Moving average for 7 days&quot;</span>), <span class="dt">linetype =</span> <span class="st">&quot;dashed&quot;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Confirmed Cases in China&quot;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-20-2.png" width="672" /></p>
+<p>From these two graphs we can tell that the pandemic in China followed a rapid and explosive pattern which can be explained by the unexpected and sudden outbreak of the COVID-19 where back in December 2019, people in China were not aware of this virus. When the virus was first detected and identified, there had already been many people who were infected.</p>
+<p>While in the US graph, we can see a more smooth growth on the cumulative confirmed cases because the people in US was very much prepared and warned. However, due to lack of detection method on the virus at the beginning phase, we may notice a more rapid growth in later stage of this pandemic.</p>
+<p>Now, we shall observe the comparison when we put the confirmed cases together in one graph.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1">df_total_confirmed &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">date =</span> df_us_confirmed<span class="op">$</span>date, <span class="dt">confirmed_us =</span> df_us_confirmed<span class="op">$</span>confirmed, <span class="dt">confirmed_cn =</span> df_cn_confirmed<span class="op">$</span>confirmed)</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2"><span class="kw">ggplot</span>(<span class="dt">data=</span>df_total_confirmed[<span class="dv">0</span><span class="op">:</span><span class="dv">70</span>,], <span class="kw">aes</span>(date)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb18-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> confirmed_us, <span class="dt">colour =</span> <span class="st">&quot;Confirmed Cases in US&quot;</span>), <span class="dt">size=</span><span class="fl">1.3</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb18-4" data-line-number="4"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> confirmed_cn, <span class="dt">colour =</span> <span class="st">&quot;Confirmed Cases in China&quot;</span>), <span class="dt">size=</span><span class="fl">1.3</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb18-5" data-line-number="5"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Confirmed Cases in both Country&quot;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-21-1.png" width="672" />
+For this graph we only subset the first 70 days after the first confirmed cases was identified in China because the confirmed cases in US owns a much larger scale later. What makes the differences is that the Chinese government adopted a much more aggressive policy where staring from the lunar new year in 2020, people in China experienced an almost full lock down on traffic and quarantined at home for almost two months. The action is effective for preventing the situation from deteriorating, but also caused major loss on economy, especially in Huber province.</p>
+<p>For the next step, we shall look at the daily increases in both Country.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">ggplot</span>(<span class="dt">data=</span>df_us_daily, <span class="kw">aes</span>(<span class="dt">x=</span>date, <span class="dt">y=</span>confirmed)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&#39;identity&#39;</span>, <span class="dt">color=</span><span class="st">&#39;navy&#39;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y=</span>moving_average), <span class="dt">color=</span><span class="st">&#39;red&#39;</span> , <span class="dt">linetype =</span> <span class="st">&quot;dashed&quot;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Daily Confired Cases in US&quot;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw">ggplot</span>(<span class="dt">data=</span>df_cn_daily, <span class="kw">aes</span>(<span class="dt">x=</span>date, <span class="dt">y=</span>confirmed)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb20-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&#39;identity&#39;</span>, <span class="dt">color=</span><span class="st">&#39;navy&#39;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y=</span>moving_average), <span class="dt">color=</span><span class="st">&#39;red&#39;</span> , <span class="dt">linetype =</span> <span class="st">&quot;dashed&quot;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb20-4" data-line-number="4"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Daily Confired Cases in China&quot;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-22-2.png" width="672" />
+First, let us focus on the US graph where we can find a clear downward trend after around 100 days after the covid outbreak. This is because of the quarantine is effective around March where schools and company are shutting down and people first started to be aware of the virus. However the trend did not last long as people in US are losing patience and started questioning about the rightness of the quarantine. Major growth were disclosed when thanksgiving and Christmas arrived.</p>
+<p>Second, let us take a look a the China Graph where we can discover a very huge bar. The story behind this data is that due to the lack of detection methods of the virus, on Feb 13th, the Chinese government issued a special method where the virus an individual case can be identified through the X_ray of the patients’ lungs. This measure quickly release the tension on the covid-detection kit, but also identified huge amount of cases on one day. Similarly on the later stage, some individual cases were identified during the travel in summer and Chinese lunar new year.</p>
+<p>Last but not least, let us look at the death cases in both country.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">ggplot</span>(<span class="dt">data=</span>df_us_death, <span class="kw">aes</span>(date)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb21-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> death, <span class="dt">colour =</span> <span class="st">&quot;Death Cases&quot;</span>), <span class="dt">size=</span><span class="fl">1.3</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb21-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> moving_average, <span class="dt">colour =</span> <span class="st">&quot;Moving average for 7 days&quot;</span>), <span class="dt">linetype =</span> <span class="st">&quot;dashed&quot;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb21-4" data-line-number="4"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Confirmed Death in US&quot;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="kw">ggplot</span>(<span class="dt">data=</span>df_cn_death, <span class="kw">aes</span>(date)) <span class="op">+</span></a>
+<a class="sourceLine" id="cb22-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> death, <span class="dt">colour =</span> <span class="st">&quot;Death Cases&quot;</span>), <span class="dt">size=</span><span class="fl">1.3</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb22-3" data-line-number="3"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> moving_average, <span class="dt">colour =</span> <span class="st">&quot;Moving average for 7 days&quot;</span>), <span class="dt">linetype =</span> <span class="st">&quot;dashed&quot;</span>)<span class="op">+</span></a>
+<a class="sourceLine" id="cb22-4" data-line-number="4"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Confirmed Death in China&quot;</span>)</a></code></pre></div>
+<p><img src="finalproj_files/figure-html/unnamed-chunk-23-2.png" width="672" />
+From these two graph we can tell the graph in US roughly follows the same pattern as the cumulative confirmed cases. However we may find a sudden growth in the graph of China on Day 85. At that time the full lock down in Wuhan has been closed, but the story behind the data is that on Day 85, the Chinese government started to inspecting each and every death cases during the outbreak of Covid-19 to account for the proper number in death due to the virus since some cases may be missed or miscalculated during the locked down.</p>
 
+</div>
 </div>
             </section>
 
