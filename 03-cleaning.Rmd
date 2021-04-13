@@ -1,1 +1,125 @@
 # Data transformation
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE)
+library(tidyverse)
+```
+
+
+The detailed code would be represented in Python with links in this section. Basically for the first two questions we are addressing, we use mainly the dataset from what we have scratched from web and we gathered them into one dataset. For the final question, we managed to find a moving average on each variable with a 7-day window because it can provide us with both a direct and smooth look on the graph. 
+
+code link: https://github.com/ainiyo123/data-transformation.git
+
+First, loading the COVID-19 data of each province into the environment. The data of each province is stored in different csv files. Therefore, we use `lapply` to load all data at once. Since the date in each file has different format, we need to uniform format. After that, store all data in a dataframe. 
+
+```{r}
+setwd("~/Columbia_DS/EDAV/final_project/covid data")
+file_name <- list.files(pattern="*.csv")
+covid_data <- lapply(file_name, function(x) read.csv(x, header = TRUE, row.names = 1))
+
+for (i in 1:34) {
+  if (grepl(pattern = "月",x = covid_data[[i]][1,1])){
+    covid_data[[i]]$Date <- as.Date(paste0('2020年', covid_data[[i]]$Date), "%Y年%m月%d日")
+  }else{
+    covid_data[[i]]$Date <- as.Date(paste0('2020/', covid_data[[i]]$Date), "%Y/%m/%d")
+  }
+}
+
+setwd("~/Columbia_DS/EDAV/final_project")
+province_csvfile <- read.csv('province_csvfile.csv', header = FALSE)
+date_range <- seq.Date(from = as.Date("2020/01/19",format = "%Y/%m/%d"), by = "day", length.out = 42)
+
+covid_data_province <- data.frame(date = date_range)
+
+for (i in 1:34) {
+  name_idx <- which(province_csvfile$V2==file_name[i])
+  confirmed <- rep(0, 42)
+  date_province <- covid_data[[i]]$Date
+  province_csvfile$V1[name_idx]
+  for (j in 1:42){
+    idx <- which(date_province==date_range[j])
+    if (length(idx)!=0){
+      confirmed[j] = covid_data[[i]]$Confirmed.cases[idx]
+    }else if(length(idx)==0 && j!=1){
+      confirmed[j] = confirmed[j-1]
+    }
+  }
+  covid_data_province <- transform(covid_data_province, new_col = confirmed)
+  covid_data_province <- plyr::rename(covid_data_province, c(new_col=province_csvfile$V1[name_idx]))
+}
+
+province_order <- names(covid_data_province)[order(covid_data_province[42, 2:35], decreasing = T)+1]
+
+head(covid_data_province[1:8])
+```
+
+For the cured data, we use the same method to strom them in one dataframe. 
+
+```{r}
+
+covid_cured_data_province <- data.frame(date = date_range)
+
+for (i in 1:34) {
+  name_idx <- which(province_csvfile$V2==file_name[i])
+  cured <- rep(0, 42)
+  date_province <- covid_data[[i]]$Date
+  province_csvfile$V1[name_idx]
+  for (j in 1:42){
+    idx <- which(date_province==date_range[j])
+    if (length(idx)!=0){
+      if (is.na(covid_data[[i]]$Cured[idx])) {
+        covid_data[[i]]$Cured[idx] = 0
+      }
+      else {
+        cured[j] = covid_data[[i]]$Cured[idx]
+      }
+    }else if(length(idx)==0 && j!=1){
+      cured[j] = cured[j-1]
+    }
+  }
+  covid_cured_data_province <- transform(covid_cured_data_province, new_col = cured)
+  covid_cured_data_province <- plyr::rename(covid_cured_data_province, c(new_col=province_csvfile$V1[name_idx]))
+}
+```
+
+We then calculate new cases through cumulative confirmed data. 
+
+```{r}
+covid_added_byday <- covid_data_province
+for (i in 42:2){
+  covid_added_byday[i,c(2:35)] <- covid_added_byday[i,c(2:35)] - covid_added_byday[i-1,c(2:35)]
+}
+```
+
+
+Now, these dataframes are messy, we need to tidy them before plotting.
+
+```{r}
+# confirmed
+covid_data_tidy <- covid_data_province %>%
+pivot_longer(cols = !date, names_to = "province",
+values_to = "confirmed_cases")
+
+# cured
+covid_cured_data_tidy <- covid_cured_data_province %>%
+pivot_longer(cols = !date, names_to = "province",
+values_to = "cured")
+
+# added
+covid_added_byday_tidy <- covid_added_byday %>%
+pivot_longer(cols = !date, names_to = "province",
+values_to = "added_confirmed_cases")
+
+covid_added_byday_tidy$province[covid_added_byday_tidy$province == 'Inner.Mongoria'] <- 'Inner Mongolia'
+covid_added_byday_tidy$province[covid_added_byday_tidy$province == 'Hong.Kong'] <- 'Hong Kong'
+
+# confirm cure
+confirmed_cured <- inner_join(covid_data_tidy, covid_cured_data_tidy, by = c('date','province'))
+confirmed_cured_tidy <- confirmed_cured %>%
+pivot_longer(cols = !c('date','province'), names_to = "type",
+values_to = "value")
+
+head(covid_added_byday_tidy)
+```
